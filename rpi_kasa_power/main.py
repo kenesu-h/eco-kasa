@@ -44,11 +44,14 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
 
   # Borrowing this from python-nmap's documentation
   nm: nmap.PortScanner = nmap.PortScanner()
-  nm.scan(hosts=to_check + "/" + str(24))
+  print("Currently scanning the network using nmap...")
+  nm.scan(to_check, str(24))
+  print("Finished scanning.")
 
   devices: List[SmartDevice] = [] 
   for host in nm.all_hosts():
     try:
+      print("Found a device at IP: " + host)
       devices.append(asyncio.run(Discover.discover_single(host)))
     except SmartDeviceException:
       pass
