@@ -74,19 +74,19 @@ def print_devices(devices: Dict[str, SmartDevice]) -> None:
     table.append([addr, device.alias, str(device.is_on)])
   print(tabulate(table, ["IP", "Alias", "Is on?"]))
 
-def try_device_on(device: SmartDevice) -> None:
+async def try_device_on(device: SmartDevice) -> None:
   """ Attempts to turn the device on, but will fail if it's already on. """
   if device.is_on:
     print("The device is already on.")
   else:
-    asyncio.wait(device.turn_on())
+    await device.turn_on()
 
-def try_device_off(device: SmartDevice) -> None:
+async def try_device_off(device: SmartDevice) -> None:
   """ Attempts to turn the device off, but will fail if it's already off. """
   if device.is_off:
     print("The device is already off.")
   else:
-    asyncio.wait(device.turn_off())
+    await device.turn_off()
 
 def to_power_to_bool(to_power: str) -> Optional[bool]:
   as_lower: str = to_power.lower()
