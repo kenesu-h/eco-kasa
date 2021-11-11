@@ -48,11 +48,11 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
   nm.scan(to_check, str(24))
   print("Finished scanning.")
 
-  devices: List[SmartDevice] = [] 
+  devices: Dict[str, SmartDevice] = {}
   for host in nm.all_hosts():
     try:
       print("Found a device at IP: " + host)
-      devices.append(asyncio.run(Discover.discover_single(host)))
+      devices[host] = asyncio.run(Discover.discover_single(host))
     except SmartDeviceException:
       pass
   return devices
