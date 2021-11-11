@@ -40,12 +40,12 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
   default_gateway: str = netifaces.gateways()["default"][netifaces.AF_INET][0]
   parts: List[str] = default_gateway.split(".")
   parts[-1] = str(0)
-  to_check: str = ".".join(parts)
+  to_check: str = ".".join(parts) + "/24"
 
   # Borrowing this from python-nmap's documentation
   nm: nmap.PortScanner = nmap.PortScanner()
   print("Currently scanning the network using nmap...")
-  nm.scan(to_check, str(24))
+  nm.scan(to_check)
   print("Finished scanning.")
 
   devices: Dict[str, SmartDevice] = {}
