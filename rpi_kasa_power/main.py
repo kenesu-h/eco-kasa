@@ -79,14 +79,14 @@ async def try_device_on(device: SmartDevice) -> None:
   if device.is_on:
     print("The device is already on.")
   else:
-    await device.turn_on()
+    asyncio.run(device.turn_on())
 
 async def try_device_off(device: SmartDevice) -> None:
   """ Attempts to turn the device off, but will fail if it's already off. """
   if device.is_off:
     print("The device is already off.")
   else:
-    await device.turn_off()
+    asyncio.run(device.turn_off())
 
 def to_power_to_bool(to_power: str) -> Optional[bool]:
   as_lower: str = to_power.lower()
