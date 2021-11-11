@@ -18,7 +18,7 @@ def init_parser() -> ArgumentParser:
 
   parser.add_argument(
     "to_power", type=str,
-    help="Must be one of either \"true\" or \"false\". Decides whether to power"
+    help="Must be one of either \"on\" or \"off\". Decides whether to power"
       + " the target device on or off."
   )
 
@@ -45,7 +45,7 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
   # Borrowing this from python-nmap's documentation
   nm: nmap.PortScanner = nmap.PortScanner()
   print("Currently scanning the network using nmap...")
-  nm.scan(to_check)
+  nm.scan(to_check, arguments="-sn")
   print("Finished scanning.")
 
   devices: Dict[str, SmartDevice] = {}
@@ -87,12 +87,21 @@ def try_device_off(device: SmartDevice) -> None:
   else:
     asyncio.run(device.turn_off())
 
+def to_power_to_bool(to_power: str) -> Optional[bool]:
+  as_lower: str = to_power.lower()
+  if as_lower == "on":
+    return True
+  elif as_lower == "off":
+    return False
+  else:
+    return None
+
 if __name__ == "__main__":
   parser: ArgumentParser = init_parser()
   args: vars = vars(parser.parse_args())
 
   alias: str = args.get("alias")
-  to_power: bool = args.get("to_power")
+  to_power: bool = to_power_to_bool(args.get("to_power"))
 
   devices: Dict[str, SmartDevice] = discover_devices_nmap()
   maybe_device: Optional[SmartDevice] = device_by_alias(alias, devices)
@@ -109,5 +118,7 @@ if __name__ == "__main__":
     maybe_device: SmartDevice
     if to_power:
       try_device_on(maybe_device)
-    else:
+    elif not to_power:
       try_device_off(maybe_device)
+    else:
+      print("to_power msut be either \"on\" or \"off\".")
