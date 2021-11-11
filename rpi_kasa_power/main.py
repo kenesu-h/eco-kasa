@@ -43,7 +43,7 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
   to_check: str = ".".join(parts)
 
   # Borrowing this from python-nmap's documentation
-  nm: nmap.PortScanner = nmap.PortScanner
+  nm: nmap.PortScanner = nmap.PortScanner()
   nm.scan(hosts=to_check + "/" + str(24))
 
   devices: List[SmartDevice] = [] 
