@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
-from kasa import Discover, SmartDevice
+from kasa import Discover, SmartDevice, SmartDeviceException
 from tabulate import tabulate
-from typing import Dict, List, Optional
-import asyncio
+from typing import Dict, List, Optional, Tuple
+import asyncio, netifaces, nmap
 
 def init_parser() -> ArgumentParser:
   """ Initializes the argument parser. """
@@ -24,10 +24,34 @@ def init_parser() -> ArgumentParser:
 
   return parser
 
-def discover_devices():
+def discover_devices() -> Dict[str, SmartDevice]:
+  """ Discovers the devices that exist on the local network. """
   devices: Dict[str, SmartDevice] = asyncio.run(Discover.discover())
   for _, device in devices.items():
     asyncio.run(device.update())
+  return devices
+
+def discover_devices_nmap() -> Dict[str, SmartDevice]:
+  """
+  Discovers the devices that exist on the local network, but using nmap instead
+  since python-kasa's implementation of discovery doesn't work too well...
+  """
+  # Borrowed this part from https://stackoverflow.com/questions/2761829/python-get-default-gateway-for-a-local-interface-ip-address-in-linux/6556951
+  default_gateway: str = netifaces.gateways()["default"][netifaces.AF_INET][0]
+  parts: List[str] = default_gateway.split(".")
+  parts[-1] = 0
+  to_check: str = ".".join(parts)
+
+  # Borrowing this from python-nmap's documentation
+  nm: nmap.PortScanner = nmap.PortScanner
+  nm.scan(hosts=to_check + "/" + str(24))
+
+  devices: List[SmartDevice] = [] 
+  for host in nm.all_hosts():
+    try:
+      devices.append(asyncio.run(Discover.discover_single(host)))
+    except SmartDeviceException:
+      pass
   return devices
 
 def device_by_alias(
@@ -67,7 +91,7 @@ if __name__ == "__main__":
   alias: str = args.get("alias")
   to_power: bool = args.get("to_power")
 
-  devices: Dict[str, SmartDevice] = asyncio.run(Discover.discover())
+  devices: Dict[str, SmartDevice] = discover_devices_nmap()
   maybe_device: Optional[SmartDevice] = device_by_alias(alias, devices)
 
   if maybe_device == None:
