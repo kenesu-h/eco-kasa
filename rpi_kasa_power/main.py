@@ -39,7 +39,7 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
   # Borrowed this part from https://stackoverflow.com/questions/2761829/python-get-default-gateway-for-a-local-interface-ip-address-in-linux/6556951
   default_gateway: str = netifaces.gateways()["default"][netifaces.AF_INET][0]
   parts: List[str] = default_gateway.split(".")
-  parts[-1] = 0
+  parts[-1] = str(0)
   to_check: str = ".".join(parts)
 
   # Borrowing this from python-nmap's documentation
