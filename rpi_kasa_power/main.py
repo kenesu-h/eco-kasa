@@ -24,6 +24,12 @@ def init_parser() -> ArgumentParser:
 
   return parser
 
+def discover_devices():
+  devices: Dict[str, SmartDevice] = asyncio.run(Discover.discover())
+  for _, device in devices.items():
+    asyncio.run(device.update())
+  return devices
+
 def device_by_alias(
   alias: str, devices: Dict[str, SmartDevice]
 ) -> Optional[SmartDevice]:
@@ -45,16 +51,14 @@ def try_device_on(device: SmartDevice) -> None:
   if device.is_on:
     print("The device is already on.")
   else:
-    device.turn_on()
-    print("The device has been turned on.")
+    asyncio.run(device.turn_on())
 
 def try_device_off(device: SmartDevice) -> None:
   """ Attempts to turn the device off, but will fail if it's already off. """
   if device.is_off:
     print("The device is already off.")
   else:
-    device.turn_off()
-    print("The device has been turned off.")
+    asyncio.run(device.turn_off())
 
 if __name__ == "__main__":
   parser: ArgumentParser = init_parser()
