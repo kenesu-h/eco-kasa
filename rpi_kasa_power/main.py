@@ -50,9 +50,12 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
 
   devices: Dict[str, SmartDevice] = {}
   for host in nm.all_hosts():
-    device: SmartDevice = asyncio.run(Discover.discover_single(host))
-    asyncio.run(device.update())
-    devices[host] = device
+    try:
+      device: SmartDevice = asyncio.run(Discover.discover_single(host))
+      asyncio.run(device.update())
+      devices[host] = device
+    except SmartDeviceException:
+      pass
   return devices
 
 def device_by_alias(
