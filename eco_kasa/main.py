@@ -158,8 +158,7 @@ def computer_has_internet():
       "ping",
       ("-n" if platform.system().lower() == "windows" else "-c"),
       "1",
-      "8.8.8.8",
-      ">/dev/null"
+      "8.8.8.8"
     ]
   )
   return response == 0
