@@ -89,14 +89,14 @@ class Config:
 
   def as_dict(self) -> Dict[str, List[str]]:
     as_dict: Dict[str, List[str]] = {}
-    as_dict["target"] = self.__targets
+    as_dict["targets"] = self.__targets
     return as_dict
 
 def config_default() -> Config:
   return Config([])
 
 def config_from_dict(d: Dict[str, List[str]]) -> Config:
-  return Config(d["target"])
+  return Config(d["targets"])
 
 class Application:
   def __init__(self) -> None:
@@ -107,11 +107,14 @@ class Application:
   def load_config(self) -> Config:
     if Path("./config.json").is_file():
       file: TextIOWrapper = open("./config.json", "r")
-      return Config(json.load(file)["targets"])
+      targets: List[str] = Config(json.loads(file.read()))["targets"]
+      file.close()
+      return targets
     else:
       print("No config.json found, writing a new one.")
       file: TextIOWrapper = open("./config.json", "w")
       json.dump(config_default().as_dict(), file)
+      file.close()
       print(
         "Config written. Please edit it with your target IPs and/or aliases."
         + " and rerun the script."
