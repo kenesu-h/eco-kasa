@@ -1,10 +1,9 @@
 from argparse import ArgumentParser, Action, Namespace
 from enum import Enum
-from http.client import HTTPSConnection
 from kasa import Discover, SmartDevice, SmartDeviceException
 from tabulate import tabulate
 from typing import Dict, List, Optional
-import asyncio, netifaces, nmap
+import asyncio, netifaces, nmap, os, platform
 
 class Operation(Enum):
   TurnOn = "turn_on"
@@ -153,15 +152,13 @@ def try_set_alias(target: str, new_alias: str) -> None:
     asyncio.run(maybe_device.set_alias(new_alias))
 
 def computer_has_internet():
-  # Borrowed from https://stackoverflow.com/questions/3764291/how-can-i-see-if-theres-an-available-and-active-network-connection-in-python
-  connection: HTTPSConnection = HTTPSConnection("8.8.8.8", timeout = 5)
-  try:
-    connection.request("HEAD", "/")
-    return True
-  except Exception:
-    return False
-  finally:
-    connection.close()
+  # Borrowed from https://stackoverflow.com/questions/2953462/pinging-servers-in-python 
+  response: int = os.system(
+    "ping "
+    + ("-n " if platform.system().lower() == "windows" else "-c ")
+    +  "1 8.8.8.8"
+  )
+  return response == 0
 
 def try_update() -> None:
   devices: Dict[str, SmartDevice] = discover_devices_nmap()
