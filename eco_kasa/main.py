@@ -3,7 +3,7 @@ from enum import Enum
 from kasa import Discover, SmartDevice, SmartDeviceException
 from tabulate import tabulate
 from typing import Dict, List, Optional
-import asyncio, netifaces, nmap, os, platform
+import asyncio, netifaces, nmap, platform, subprocess
 
 class Operation(Enum):
   TurnOn = "turn_on"
@@ -153,10 +153,14 @@ def try_set_alias(target: str, new_alias: str) -> None:
 
 def computer_has_internet():
   # Borrowed from https://stackoverflow.com/questions/2953462/pinging-servers-in-python 
-  response: int = os.system(
-    "ping "
-    + ("-n " if platform.system().lower() == "windows" else "-c ")
-    +  "1 8.8.8.8"
+  response: int = subprocess.call(
+    [
+      "ping",
+      ("-n" if platform.system().lower() == "windows" else "-c"),
+      "1",
+      "8.8.8.8",
+      ">/dev/null"
+    ]
   )
   return response == 0
 
