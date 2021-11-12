@@ -1,24 +1,38 @@
 # eco-kasa
-A command line application for powering on or off Kasa smart devices.
+A command line application intended for personal use in automatically powering on
+or off Kasa smart devices in response to an Internet connection.
 
-# Installation & Usage
+# Installation
 This uses [Poetry](https://python-poetry.org/) for dependency management. You can
 either install Poetry to ensure this works - and to isolate it and its
 dependencies - or you can just install the main dependencies and run it directly.
 
-# With Poetry
+## Prerequisites
+You need:
+- a Git installation.
+- a [Poetry](https://python-poetry.org/) installation.
+- an nmap installation.
+
+## Instructions
 1. Clone the Git repo.
 2. Run `poetry install` inside the repo's directory.
-3. Similarly, run `poetry run python -m rpi_kasa_power.main <alias> <to_power>`.
-  - `<alias>` must be the alias of the target device.
-  - `<to_power>` must be either `true` or `false`.
 
-# Without Poetry
-A Python installation with a version of at least 3.7 is required.
+# Usage
+Run the script using `poetry run main <operation>` inside the repo directory.
 
-1. Clone the Git repo.
-2. Using `pip`, install `python-kasa` and `tabulate`.
-3. Run `python -m rpi_kasa_power.main <alias> <to_power>` inside the repo's
-   directory.
-  - `<alias>` must be the alias of the target device.
-  - `<to_power>` must be either `true` or `false`.
+`<operation>` can be any one of:
+- `turn_on <target>`
+  - Turns on the smart device with the target IP or alias.
+  - `<target>` must be the IP or alias of the device you want to turn on.
+- `turn_off <target>`
+  - Same as above, but it turns the device off.
+- `list`
+  - Lists out all the smart devices currently found on the network.
+- `set_alias <target> <new_alias>`
+  - Sets the alias of the smart device with the target IP or alias to a new
+    alias.
+  - `<target>` must be the IP or alias of the device you want to set.
+  - `<new_alias>` is the new alias to set to.
+- `update`
+  - Updates all smart devices on the network. Turns them off if there is no
+    Internet connection on this computer, and turns them on if there is.

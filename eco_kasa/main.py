@@ -1,35 +1,73 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Action, Namespace
+from enum import Enum
+from http.client import HTTPSConnection
 from kasa import Discover, SmartDevice, SmartDeviceException
 from tabulate import tabulate
 from typing import Dict, List, Optional
 import asyncio, netifaces, nmap
 
+class Operation(Enum):
+  TurnOn = "turn_on"
+  TurnOff = "turn_off"
+  ListDevices = "list"
+  SetAlias = "set_alias"
+  Update = "update"
+
+def operation_from_str(s: str) -> Optional[Action]:
+  as_lower: str = s.lower()
+  if as_lower == Operation.TurnOn.value:
+    return Operation.TurnOn
+  elif as_lower == Operation.TurnOff.value:
+    return Operation.TurnOff
+  elif as_lower == Operation.ListDevices.value:
+    return Operation.ListDevices
+  elif as_lower == Operation.SetAlias.value:
+    return Operation.SetAlias
+  elif as_lower == Operation.Update.value:
+    return Operation.Update
+  else:
+    return None
+
 def init_parser() -> ArgumentParser:
   """ Initializes the argument parser. """
-  parser = ArgumentParser(
+  parser: ArgumentParser = ArgumentParser(
     description="A command line application for remotely powering on or off Kasa"
       + " smart devices."
   )
+  subparsers: Action = parser.add_subparsers(
+    dest="operation",
+    help="The operation to perform. Must be one of:"
+      + " \"turn_on\", \"turn_off\", \"list\", \"set_alias\", or \"update\"."
+  )
+  subparsers.required = True
 
-  parser.add_argument(
-    "alias", type=str,
-    help="The alias of the device to power on or off."
+  parser_turn_on: ArgumentParser = subparsers.add_parser("turn_on")
+  parser_turn_on.add_argument(
+    "target", type=str,
+    help="The target smart device. Can be either the device's IP or its alias."
   )
 
-  parser.add_argument(
-    "to_power", type=str,
-    help="Must be one of either \"on\" or \"off\". Decides whether to power"
-      + " the target device on or off."
+  parser_turn_off: ArgumentParser = subparsers.add_parser("turn_off")
+  parser_turn_off.add_argument(
+    "target", type=str,
+    help="The target smart device. Can be either the device's IP or its alias."
   )
+  
+  subparsers.add_parser("list")
+
+  parser_set_alias: ArgumentParser = subparsers.add_parser("set_alias")
+  parser_set_alias.add_argument(
+    "target", type=str,
+    help="The target smart device. Can be either the device's IP or its alias."
+  )
+  parser_set_alias.add_argument(
+    "new_alias", type=str,
+    help="The new alias to set to."
+  )
+
+  subparsers.add_parser("update")
 
   return parser
-
-def discover_devices() -> Dict[str, SmartDevice]:
-  """ Discovers the devices that exist on the local network. """
-  devices: Dict[str, SmartDevice] = asyncio.run(Discover.discover())
-  for _, device in devices.items():
-    asyncio.run(device.update())
-  return devices
 
 def discover_devices_nmap() -> Dict[str, SmartDevice]:
   """
@@ -45,7 +83,7 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
   # Borrowing this from python-nmap's documentation
   nm: nmap.PortScanner = nmap.PortScanner()
   print("Currently scanning the network using nmap...")
-  nm.scan(to_check, arguments="-sn")
+  nm.scan(to_check, arguments = "-sn")
   print("Finished scanning.")
 
   devices: Dict[str, SmartDevice] = {}
@@ -56,68 +94,95 @@ def discover_devices_nmap() -> Dict[str, SmartDevice]:
       pass
   return devices
 
-def device_by_alias(
-  alias: str, devices: Dict[str, SmartDevice]
+def get_device(
+  target: str, devices: Dict[str, SmartDevice]
 ) -> Optional[SmartDevice]:
-  """ Retrieves a device by some given alias. """
-  for _, device in devices.items():
-    if device.alias == alias:
-      return device
-  return None
+  """
+  Retrieves a device corresponding with the given target. The target can either
+  be the device's IP or alias.
+  """
+  if target in devices:
+    return devices[target]
+  else:
+    for _, device in devices.items():
+      if target == device.alias:
+        return device
+    return None
 
-def print_devices(devices: Dict[str, SmartDevice]) -> None:
-  """ Prints all devices out in a simple table. """
+def try_turn_on(target: str) -> None:
+  maybe_device: Optional[SmartDevice] = get_device(
+    target,
+    discover_devices_nmap()
+  )
+  if maybe_device == None:
+    print("No devices with the given IP or alias were found.")
+  else:
+    maybe_device: SmartDevice
+    if maybe_device.is_off:
+      asyncio.run(maybe_device.turn_on())
+
+def try_turn_off(target: str) -> None:
+  maybe_device: Optional[SmartDevice] = get_device(
+    target,
+    discover_devices_nmap()
+  )
+  if maybe_device == None:
+    print("No devices with the given IP or alias were found.")
+  else:
+    maybe_device: SmartDevice
+    if maybe_device.is_on:
+      asyncio.run(maybe_device.turn_off())
+
+def list_devices() -> None:
+  """ Lists all devices out in a simple table. """
+  devices: Dict[str, SmartDevice] = discover_devices_nmap()
   table: List[List[str]] = []
   for addr, device in devices.items():
     table.append([addr, device.alias, str(device.is_on)])
   print(tabulate(table, ["IP", "Alias", "Is on?"]))
 
-def try_device_on(device: SmartDevice) -> None:
-  """ Attempts to turn the device on, but will fail if it's already on. """
-  if device.is_on:
-    print("The device is already on.")
-  else:
-    asyncio.run(device.turn_on())
-
-def try_device_off(device: SmartDevice) -> None:
-  """ Attempts to turn the device off, but will fail if it's already off. """
-  if device.is_off:
-    print("The device is already off.")
-  else:
-    asyncio.run(device.turn_off())
-
-def to_power_to_bool(to_power: str) -> Optional[bool]:
-  as_lower: str = to_power.lower()
-  if as_lower == "on":
-    return True
-  elif as_lower == "off":
-    return False
-  else:
-    return None
-
-if __name__ == "__main__":
-  parser: ArgumentParser = init_parser()
-  args: vars = vars(parser.parse_args())
-
-  alias: str = args.get("alias")
-  to_power: bool = to_power_to_bool(args.get("to_power"))
-
-  devices: Dict[str, SmartDevice] = discover_devices_nmap()
-  maybe_device: Optional[SmartDevice] = device_by_alias(alias, devices)
-
+def try_set_alias(target: str, new_alias: str) -> None:
+  maybe_device: Optional[SmartDevice] = get_device(
+    target,
+    discover_devices_nmap()
+  )
   if maybe_device == None:
-    print("No devices with the following alias were found.")
-    if len(devices) > 0:
-      response: str = input(
-        "Would you like a list of the devices found on the network? (y/n)"
-      )
-      if response.lower() == "y":
-        print_devices(devices)
+    print("No devices with the given IP or alias were found.")
   else:
     maybe_device: SmartDevice
-    if to_power:
-      try_device_on(maybe_device)
-    elif to_power == False:
-      try_device_off(maybe_device)
-    else:
-      print("to_power must be either \"on\" or \"off\".")
+    asyncio.run(maybe_device.set_alias(new_alias))
+
+def computer_has_internet():
+  # Borrowed from https://stackoverflow.com/questions/3764291/how-can-i-see-if-theres-an-available-and-active-network-connection-in-python
+  connection: HTTPSConnection = HTTPSConnection("8.8.8.8", timeout = 5)
+  try:
+    connection.request("HEAD", "/")
+    return True
+  except Exception:
+    return False
+  finally:
+    connection.close()
+
+def try_update() -> None:
+  devices: Dict[str, SmartDevice] = discover_devices_nmap()
+  if computer_has_internet():
+    for _, device in devices.items():
+      if device.is_off:
+        asyncio.run(device.turn_on())
+  else:
+    for _, device in devices.items():
+      if device.is_on:
+        asyncio.run(device.turn_off()) 
+
+def main():
+  args: Namespace = init_parser().parse_args()
+  if args.operation == Operation.TurnOn.value:
+    try_turn_on(args.target)
+  elif args.operation == Operation.TurnOff.value:
+    try_turn_off(args.target)
+  elif args.operation == Operation.ListDevices.value:
+    list_devices()
+  elif args.operation == Operation.SetAlias.value:
+    try_set_alias(args.target, args.new_alias)
+  elif args.operation == Operation.Update.value:
+    try_update()
