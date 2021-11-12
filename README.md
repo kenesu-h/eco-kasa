@@ -3,9 +3,9 @@ A command line application intended for personal use in automatically powering o
 or off Kasa smart devices in response to an Internet connection.
 
 # Installation
-This uses [Poetry](https://python-poetry.org/) for dependency management. You can
-either install Poetry to ensure this works - and to isolate it and its
-dependencies - or you can just install the main dependencies and run it directly.
+This uses [Poetry](https://python-poetry.org/) for dependency management. You
+should probably install it to ensure that its Python version and dependencies are
+isolated on your system.
 
 ## Prerequisites
 You need:
@@ -14,10 +14,18 @@ You need:
 - an nmap installation.
 
 ## Instructions
-1. Clone the Git repo.
-2. Run `poetry install` inside the repo's directory.
+1. Clone eco-kasa's Git repo.
+2. Run `poetry install` inside eco-kasa's directory.
+3. Wait until the installation is done.
 
 # Usage
+
+## Prerequisites
+- Kasa smart plugs connected to the same Internet connection as your computer.
+  - Go to [Smart Plug Setup](./docs/smart-plug-setup.md) for some instructions on
+    this.
+
+## Instructions
 Run the script using `poetry run main <operation>` inside the repo directory.
 
 `<operation>` can be any one of:
@@ -36,3 +44,7 @@ Run the script using `poetry run main <operation>` inside the repo directory.
 - `update`
   - Updates all smart devices on the network. Turns them off if there is no
     Internet connection on this computer, and turns them on if there is.
+
+## Possible Issues
+- You may have to use `kasa --host <IP of your smart plug>` to get it to show up
+  when using `poetry run main list`.

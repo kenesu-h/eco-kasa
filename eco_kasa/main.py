@@ -12,7 +12,8 @@ class Operation(Enum):
   SetAlias = "set_alias"
   Update = "update"
 
-def operation_from_str(s: str) -> Optional[Action]:
+def operation_from_str(s: str) -> Optional[Operation]:
+  """ Returns an operation from the corresponding string. """
   as_lower: str = s.lower()
   if as_lower == Operation.TurnOn.value:
     return Operation.TurnOn
@@ -109,6 +110,7 @@ def get_device(
     return None
 
 def try_turn_on(target: str) -> None:
+  """ Attempts to turn on the target device. """
   maybe_device: Optional[SmartDevice] = get_device(
     target,
     discover_devices_nmap()
@@ -121,6 +123,7 @@ def try_turn_on(target: str) -> None:
       asyncio.run(maybe_device.turn_on())
 
 def try_turn_off(target: str) -> None:
+  """ Attempts to turn off the target device. """
   maybe_device: Optional[SmartDevice] = get_device(
     target,
     discover_devices_nmap()
@@ -141,6 +144,7 @@ def list_devices() -> None:
   print(tabulate(table, ["IP", "Alias", "Is on?"]))
 
 def try_set_alias(target: str, new_alias: str) -> None:
+  """ Attempts to set the alias of the target device. """
   maybe_device: Optional[SmartDevice] = get_device(
     target,
     discover_devices_nmap()
@@ -152,6 +156,9 @@ def try_set_alias(target: str, new_alias: str) -> None:
     asyncio.run(maybe_device.set_alias(new_alias))
 
 def computer_has_internet():
+  """
+  Pings Google's servers to see if this computer has an Internet connection.
+  """
   # Borrowed from https://stackoverflow.com/questions/2953462/pinging-servers-in-python 
   response: int = subprocess.call(
     [
