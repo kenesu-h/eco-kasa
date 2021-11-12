@@ -107,7 +107,7 @@ class Application:
   def load_config(self) -> Config:
     if Path("./config.json").is_file():
       file: TextIOWrapper = open("./config.json", "r")
-      targets: List[str] = Config(json.loads(file.read()))["targets"]
+      targets: List[str] = Config(json.loads(file.read())["targets"])
       file.close()
       return targets
     else:
