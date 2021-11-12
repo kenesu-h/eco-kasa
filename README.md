@@ -1,4 +1,4 @@
-# rpi-kasa-power
+# eco-kasa
 A command line application for powering on or off Kasa smart devices.
 
 # Installation & Usage

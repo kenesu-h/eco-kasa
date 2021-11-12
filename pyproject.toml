@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "rpi-kasa-power"
-version = "0.1.0"
+name = "eco-kasa"
+version = "1.0.0"
 description = ""
 authors = ["Kenneth <Kenneth@DESKTOP-VHTOUHH>"]
 

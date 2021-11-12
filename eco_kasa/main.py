@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from kasa import Discover, SmartDevice, SmartDeviceException
 from tabulate import tabulate
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 import asyncio, netifaces, nmap
 
 def init_parser() -> ArgumentParser:
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     maybe_device: SmartDevice
     if to_power:
       try_device_on(maybe_device)
-    elif not to_power:
+    elif to_power == False:
       try_device_off(maybe_device)
     else:
       print("to_power must be either \"on\" or \"off\".")
