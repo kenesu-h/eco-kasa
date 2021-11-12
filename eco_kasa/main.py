@@ -159,7 +159,9 @@ def computer_has_internet():
       ("-n" if platform.system().lower() == "windows" else "-c"),
       "1",
       "8.8.8.8"
-    ]
+    ],
+    stdout = subprocess.DEVNULL,
+    stderr = subprocess.STDOUT
   )
   return response == 0
 
